@@ -1,18 +1,27 @@
-var points = [];
-var neighbours = [];
-var mainPoints = [];
+var voronoi = new Voronoi();
 var maxX = 200;
 var maxY = 200;
 var minX = 0;
 var minY = 0;
-var voronoi = new Voronoi();
+var floorHeight = 15;
+
+var points = [];
+var neighbours = [];
+var mainPoints = [];
+
 var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 var shapePoints = [];
 var idArr = [];
+var bPos = new THREE.Vector3();
 
+var floors = [];
+
+var diagram;
+
+var floorNumber = 1;
 
 var scene = new THREE.Scene();
-scene.background = new THREE.Color("rgb(255,255,255)");
+scene.background = new THREE.Color("rgb(112,112,112)");
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
 var renderer = new THREE.WebGLRenderer();
@@ -27,24 +36,7 @@ camera.position.y = 50;
 
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-generatePoints(100);
-
-var diagram = voronoi.compute(points, bbox);
-// console.log(points);
-// console.log(diagram);
-
-getRandomCell();
-drawNeighbours(neighbours, 1);
-removeMainPoints();
- removeDuplicates();
-let M = findMiddle(shapePoints);
-let ordered = orderByPolar(shapePoints, M);
-let shape = createShapeByOrder(ordered);
-
-var extrudeSettings = { depth: 10, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
-var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial() );
-scene.add(mesh);
+floors(floorNumber)
 
 // drawLines();
 
@@ -90,7 +82,7 @@ function drawLines(){
     }
 }
 
-function getRandomCell(){
+function getRandomCell(n){
     let randomIndex = parseInt(Math.random() * points.length + 1);
     
     let voroId = points[randomIndex].voronoiId;
@@ -99,15 +91,17 @@ function getRandomCell(){
 
     getMainPoints(cell);
 
-    var dotGeometry = new THREE.Geometry();
-    dotGeometry.vertices.push(new THREE.Vector3(cell.site.x, cell.site.y,0));
-    var dotMaterial = new THREE.PointsMaterial({
-    size: 10,
-    sizeAttenuation: false,
-    color: new THREE.Color("rgb(255,0,0)")
-    });
-    var dot = new THREE.Points(dotGeometry, dotMaterial);
-    scene.add(dot);
+    bPos.copy(new THREE.Vector3( cell.site.x * -1, cell.site.y * -1 , (floorHeight/2)  * -1));
+    
+    // var dotGeometry = new THREE.Geometry();
+    // dotGeometry.vertices.push(new THREE.Vector3(cell.site.x, cell.site.y,0));
+    // var dotMaterial = new THREE.PointsMaterial({
+    // size: 10,
+    // sizeAttenuation: false,
+    // color: new THREE.Color("rgb(255,0,0)")
+    // });
+    // var dot = new THREE.Points(dotGeometry, dotMaterial);
+    // scene.add(dot);
 
     for(let i = 0; i < cell.halfedges.length; i++){
         let current = cell.halfedges[i].edge;
@@ -287,3 +281,36 @@ function createShapeByOrder(arr){
 
     return path;
 }
+
+function getOutlines(){
+    for(let i = 0; i < floors.length; i++){
+        
+    }
+}
+
+function floors(n){
+    for(let nF = 0; nF < n; nF++){
+       
+
+        generatePoints(50);
+
+        diagram = voronoi.compute(points, bbox);
+        
+        getRandomCell(n);
+        drawNeighbours(neighbours, 0);
+        removeMainPoints();
+        removeDuplicates();
+        let M = findMiddle(shapePoints);
+        let ordered = orderByPolar(shapePoints, M);
+        let shape = createShapeByOrder(ordered);
+        
+        var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+        var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+        var mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)")}) );
+        
+        mesh.position.copy(bPos);
+        floors.push(mesh);
+        scene.add(mesh);
+    }
+}
+
