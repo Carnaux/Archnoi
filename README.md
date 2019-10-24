@@ -1,6 +1,6 @@
 # Archnoi
 
-Archnoi is software for generating archtecture based on voronoi diagrams.
+Archnoi is software for generating architecture based on voronoi diagrams.
 
 
 ## The development of this project is based on phases
@@ -10,7 +10,7 @@ Archnoi is software for generating archtecture based on voronoi diagrams.
 | Phase 1       | % done       |
 | ------------- |:-------------:|
 | Generating floor polygon      | 95% |
-| Multiple floor generation | 20%      |
+| Multiple floor generation | 100%      |
 | Generating windows and doors     | 0%      |
 
 

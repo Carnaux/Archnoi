@@ -9,7 +9,7 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 1;
+var floorNumber = 3;
 
 var scene = new THREE.Scene();
 scene.background = new THREE.Color("rgb(112,112,112)");
@@ -17,7 +17,17 @@ var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeig
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 document.body.appendChild( renderer.domElement );
+
+var light = new THREE.PointLight( 0xffffff, 1, 100 );
+light.position.set( 0, (floorHeight*floorNumber) + 100, 0 );
+light.castShadow = true; 
+scene.add( light );
+
+var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
+scene.add( light );
 
 var axesHelper = new THREE.AxesHelper( 2 );
 scene.add( axesHelper );
@@ -55,20 +65,40 @@ function floorGeneration(n){
         let ordered = orderByPolar(shapePoints, M);
         let shape = createShapeByOrder(ordered);
         
-        // var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
-        // var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-
         var geometry = new THREE.ShapeGeometry( shape );
-        // var edges = new THREE.EdgesGeometry( geometry );
-        var mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)"), side: THREE.DoubleSide}) );
-       
-        // var line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
-        // scene.add( line );
+        var mesh2D = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)"), side: THREE.DoubleSide}) );
+        
+        mesh2D.position.copy(randCell.bPos);
+        
 
-    
-        mesh.position.copy(randCell.bPos);
-        floors.push(mesh);
-        scene.add(mesh);
+
+        var extrudeSettings = { depth: floorHeight, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+        var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+        var mesh3D = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+        mesh3D.castShadow = true;
+        mesh3D.receiveShadow = false; 
+
+        mesh3D.position.copy(mesh2D.position);
+        
+
+        let mesh3DWrapper = new THREE.Object3D();
+        mesh3DWrapper.add(mesh3D);
+        mesh3DWrapper.position.y = (floorHeight * nF) + 10;
+        
+        mesh3DWrapper.rotation.x = Math.PI/2;
+        let obj = {
+            pointArr: pointArr,
+            diagram: diagram,
+            shapePoints: shapePoints,
+            m: M,
+            orderedPoints: ordered,
+            shape: shape,
+            mesh2D: mesh2D,
+            mesh3D: mesh3DWrapper
+        }
+        floors.push(obj);
+        //scene.add(mesh2D);
+        scene.add(mesh3DWrapper);
     }
 }
 
@@ -97,7 +127,7 @@ function getRandomCell(points, diagram){
 
     let mainPoints = getMainPoints(cell);
 
-    let pos = new THREE.Vector3( cell.site.x * -1, cell.site.y * -1 , (floorHeight/2)  * -1);
+    let pos = new THREE.Vector3( cell.site.x * -1, cell.site.y * -1 , 0);
     
     let neighbours = [];
 
