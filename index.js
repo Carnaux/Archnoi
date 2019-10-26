@@ -9,7 +9,9 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 3;
+var floorNumber = 1;
+
+var wallThickness = 0.5
 
 var scene = new THREE.Scene();
 scene.background = new THREE.Color("rgb(112,112,112)");
@@ -63,42 +65,51 @@ function floorGeneration(n){
         removeDuplicates(shapePoints);
         let M = findMiddle(shapePoints);
         let ordered = orderByPolar(shapePoints, M);
+        let outerWall = getOutPoints(ordered);
+        var path = new THREE.Path(outerWall);
         let shape = createShapeByOrder(ordered);
-        
+
+        shape.holes = [path]; 
+
+
         var geometry = new THREE.ShapeGeometry( shape );
         var mesh2D = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)"), side: THREE.DoubleSide}) );
         
         mesh2D.position.copy(randCell.bPos);
+    
+        // var extrudeSettings = { depth: floorHeight, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+        // var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+        // var mesh3D = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+        // mesh3D.castShadow = true;
+        // mesh3D.receiveShadow = false; 
+
+        // mesh3D.position.copy(mesh2D.position);
+    
+        // let mesh3DWrapper = new THREE.Object3D();
+        // mesh3DWrapper.add(mesh3D);
+        // mesh3DWrapper.position.y = (floorHeight * nF) + 10;
         
+        // mesh3DWrapper.rotation.x = Math.PI/2;
 
+        // let obj = {
+        //     pointArr: pointArr,
+        //     diagram: diagram,
+        //     shapePoints: shapePoints,
+        //     m: M,
+        //     orderedPoints: ordered,
+        //     shape: shape,
+        //     mesh2D: mesh2D,
+        //     mesh3D: mesh3DWrapper
+        // }
 
-        var extrudeSettings = { depth: floorHeight, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
-        var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-        var mesh3D = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
-        mesh3D.castShadow = true;
-        mesh3D.receiveShadow = false; 
-
-        mesh3D.position.copy(mesh2D.position);
-        
-
-        let mesh3DWrapper = new THREE.Object3D();
-        mesh3DWrapper.add(mesh3D);
-        mesh3DWrapper.position.y = (floorHeight * nF) + 10;
-        
-        mesh3DWrapper.rotation.x = Math.PI/2;
-        let obj = {
-            pointArr: pointArr,
-            diagram: diagram,
-            shapePoints: shapePoints,
-            m: M,
-            orderedPoints: ordered,
-            shape: shape,
-            mesh2D: mesh2D,
-            mesh3D: mesh3DWrapper
-        }
-        floors.push(obj);
-        //scene.add(mesh2D);
-        scene.add(mesh3DWrapper);
+        let geom = new THREE.BufferGeometry().setFromPoints(outerWall);
+        let line = new THREE.LineLoop(geom, new THREE.LineBasicMaterial({color: 0x777777 + Math.random() * 0x777777}));
+        line.position.copy(randCell.bPos);
+        scene.add(line);
+                
+        // floors.push(obj);
+        scene.add(mesh2D);
+        //scene.add(mesh3DWrapper);
     }
 }
 
@@ -327,6 +338,10 @@ function createShapeByOrder(arr){
     return path;
 }
 
+function createAntiClockPath(arr){
+
+}
+
 function drawLines(){
     for(let i = 0; i < diagram.edges.length; i++){
         var material = new THREE.LineBasicMaterial({
@@ -344,10 +359,21 @@ function drawLines(){
     }
 }
 
-function getOutlines(){
-    for(let i = 0; i < floors.length; i++){
-        
+function getOutPoints(arr){
+    let orderedArr = [];
+    let antiClock = [];
+
+    for(let i = 0; i < arr.length; i++){
+        orderedArr.push(arr[i].p);
     }
+
+    let outOffset = OffsetContour(-wallThickness, orderedArr);
+
+    for(let i = outOffset.length-1; i > -1; i--){
+        antiClock.push(outOffset[i]);
+    }
+
+    return antiClock;
 }
 
 function drawShapePoints(geo){
