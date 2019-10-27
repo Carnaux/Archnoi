@@ -3,7 +3,7 @@ var maxX = 200;
 var maxY = 200;
 var minX = 0;
 var minY = 0;
-var floorHeight = 15;
+var floorHeight = 14;
 
 var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
@@ -66,30 +66,39 @@ function floorGeneration(n){
         let M = findMiddle(shapePoints);
         let ordered = orderByPolar(shapePoints, M);
         let outerWall = getOutPoints(ordered);
-        var path = new THREE.Path(outerWall);
-        let shape = createShapeByOrder(ordered);
+        let hole = createShapeByOrder(ordered);
+        
+        var shape = new THREE.Shape(outerWall);
+        var floorShape = new THREE.Shape(outerWall);
+        var ceilingShape = new THREE.Shape(outerWall);
+        shape.holes.push(hole); 
 
-        shape.holes = [path]; 
-
+        var geometry = new THREE.ShapeGeometry( floorShape );
+        var mesh2Dfloor = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)"), side: THREE.DoubleSide}) );
+        
+        mesh2Dfloor.position.copy(randCell.bPos);
+        mesh2Dfloor.position.z = mesh2Dfloor.position.z + 15;
+        scene.add(mesh2Dfloor);
 
         var geometry = new THREE.ShapeGeometry( shape );
         var mesh2D = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)"), side: THREE.DoubleSide}) );
         
         mesh2D.position.copy(randCell.bPos);
     
-        // var extrudeSettings = { depth: floorHeight, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
-        // var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-        // var mesh3D = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
-        // mesh3D.castShadow = true;
-        // mesh3D.receiveShadow = false; 
+        var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+        var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+        var mesh3D = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+        mesh3D.castShadow = true;
+        mesh3D.receiveShadow = false; 
 
-        // mesh3D.position.copy(mesh2D.position);
-    
-        // let mesh3DWrapper = new THREE.Object3D();
-        // mesh3DWrapper.add(mesh3D);
-        // mesh3DWrapper.position.y = (floorHeight * nF) + 10;
+        mesh3D.position.copy(randCell.bPos);
+        // mesh3D.position.z =  mesh3D.position.z - 5;
+        let mesh3DWrapper = new THREE.Object3D();
+        mesh3DWrapper.add(mesh3D);
+        mesh3DWrapper.add(mesh2Dfloor);
+        mesh3DWrapper.position.y = (floorHeight * nF);
         
-        // mesh3DWrapper.rotation.x = Math.PI/2;
+        mesh3DWrapper.rotation.x = Math.PI/2;
 
         // let obj = {
         //     pointArr: pointArr,
@@ -102,14 +111,14 @@ function floorGeneration(n){
         //     mesh3D: mesh3DWrapper
         // }
 
-        let geom = new THREE.BufferGeometry().setFromPoints(outerWall);
-        let line = new THREE.LineLoop(geom, new THREE.LineBasicMaterial({color: 0x777777 + Math.random() * 0x777777}));
-        line.position.copy(randCell.bPos);
-        scene.add(line);
+        // let geom = new THREE.BufferGeometry().setFromPoints(outerWall);
+        // let line = new THREE.LineLoop(geom, new THREE.LineBasicMaterial({color: 0x777777 + Math.random() * 0x777777}));
+        // line.position.copy(randCell.bPos);
+        // scene.add(line);
                 
         // floors.push(obj);
-        scene.add(mesh2D);
-        //scene.add(mesh3DWrapper);
+        //scene.add(mesh2D);
+        scene.add(mesh3DWrapper);
     }
 }
 
@@ -359,9 +368,18 @@ function drawLines(){
     }
 }
 
+function reverseInternalPoints(arr){
+    let antiClock = [];
+
+    for(let i = arr.length-1; i > -1; i--){
+        antiClock.push(arr[i]);
+    }
+
+    return antiClock;
+}
+
 function getOutPoints(arr){
     let orderedArr = [];
-    let antiClock = [];
 
     for(let i = 0; i < arr.length; i++){
         orderedArr.push(arr[i].p);
@@ -369,11 +387,9 @@ function getOutPoints(arr){
 
     let outOffset = OffsetContour(-wallThickness, orderedArr);
 
-    for(let i = outOffset.length-1; i > -1; i--){
-        antiClock.push(outOffset[i]);
-    }
+    
 
-    return antiClock;
+    return outOffset;
 }
 
 function drawShapePoints(geo){
