@@ -9,7 +9,7 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 1;
+var floorNumber = 4;
 
 var wallThickness = 0.5
 
@@ -39,7 +39,7 @@ camera.position.y = 50;
 
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-floorGeneration(floorNumber)
+buildingGeneration(floorNumber);
 
 // drawLines();
 
@@ -52,7 +52,7 @@ var animate = function () {
 
 animate();
 
-function floorGeneration(n){
+function buildingGeneration(n){
     for(let nF = 0; nF < n; nF++){
     
         let pointArr = generatePoints(50);
@@ -60,65 +60,37 @@ function floorGeneration(n){
         let diagram = voronoi.compute(pointArr, bbox);
         
         let randCell = getRandomCell(pointArr, diagram);
-        let shapePoints = processNeighbours(randCell.neighbours, diagram, 0);
+        let shapePoints = processNeighbours(randCell.neighbours, diagram);
         removeMainPoints(shapePoints, randCell);
         removeDuplicates(shapePoints);
         let M = findMiddle(shapePoints);
         let ordered = orderByPolar(shapePoints, M);
         let outerWall = getOutPoints(ordered);
         let hole = createShapeByOrder(ordered);
-        
-        var shape = new THREE.Shape(outerWall);
-        var floorShape = new THREE.Shape(outerWall);
-        var ceilingShape = new THREE.Shape(outerWall);
-        shape.holes.push(hole); 
 
-        var geometry = new THREE.ShapeGeometry( floorShape );
-        var mesh2Dfloor = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)"), side: THREE.DoubleSide}) );
+        console.log(ordered);
         
-        mesh2Dfloor.position.copy(randCell.bPos);
-        mesh2Dfloor.position.z = mesh2Dfloor.position.z + 15;
-        scene.add(mesh2Dfloor);
 
-        var geometry = new THREE.ShapeGeometry( shape );
-        var mesh2D = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({color: new THREE.Color("rgb(205,192,176)"), side: THREE.DoubleSide}) );
-        
-        mesh2D.position.copy(randCell.bPos);
-    
-        var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
-        var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-        var mesh3D = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
-        mesh3D.castShadow = true;
-        mesh3D.receiveShadow = false; 
+        let floor = create3DFloor(hole, outerWall, randCell.bPos, nF);
+        scene.add(floor)
+      
+        // console.log("mesh", floor);
 
-        mesh3D.position.copy(randCell.bPos);
-        // mesh3D.position.z =  mesh3D.position.z - 5;
-        let mesh3DWrapper = new THREE.Object3D();
-        mesh3DWrapper.add(mesh3D);
-        mesh3DWrapper.add(mesh2Dfloor);
-        mesh3DWrapper.position.y = (floorHeight * nF);
-        
-        mesh3DWrapper.rotation.x = Math.PI/2;
 
         // let obj = {
         //     pointArr: pointArr,
         //     diagram: diagram,
+        //     cell: randCell,
         //     shapePoints: shapePoints,
         //     m: M,
         //     orderedPoints: ordered,
         //     shape: shape,
-        //     mesh2D: mesh2D,
         //     mesh3D: mesh3DWrapper
         // }
 
-        // let geom = new THREE.BufferGeometry().setFromPoints(outerWall);
-        // let line = new THREE.LineLoop(geom, new THREE.LineBasicMaterial({color: 0x777777 + Math.random() * 0x777777}));
-        // line.position.copy(randCell.bPos);
-        // scene.add(line);
-                
+
         // floors.push(obj);
-        //scene.add(mesh2D);
-        scene.add(mesh3DWrapper);
+       
     }
 }
 
@@ -181,6 +153,7 @@ function getRandomCell(points, diagram){
 function getMainPoints(cell){
     let mainPoints = [];
     let idArr = [];
+
     for(let i = 0; i < cell.halfedges.length; i++){
 
         let va = new THREE.Vector3( cell.halfedges[i].edge.va.x,  cell.halfedges[i].edge.va.y, 0 );
@@ -212,7 +185,7 @@ function getMainPoints(cell){
     return obj;
 }
 
-function processNeighbours(arr, diagram, n){
+function processNeighbours(arr, diagram){
     let shapePoints = [];
     for(let i = 0; i < arr.length; i++){
 
@@ -225,22 +198,6 @@ function processNeighbours(arr, diagram, n){
 
             shapePoints.push(va);
             shapePoints.push(vb);
-
-            if(n == 1){
-                var material = new THREE.LineBasicMaterial({
-                    color: 0x0000ff
-                });
-                
-                var geometry = new THREE.Geometry();
-                geometry.vertices.push(
-                    va,
-                    vb
-                );
-                
-                var line = new THREE.Line( geometry, material );
-                scene.add( line );
-            }
-            
         }
     }
     return shapePoints;
@@ -347,10 +304,6 @@ function createShapeByOrder(arr){
     return path;
 }
 
-function createAntiClockPath(arr){
-
-}
-
 function drawLines(){
     for(let i = 0; i < diagram.edges.length; i++){
         var material = new THREE.LineBasicMaterial({
@@ -366,16 +319,6 @@ function drawLines(){
         var line = new THREE.Line( geometry, material );
         scene.add( line );
     }
-}
-
-function reverseInternalPoints(arr){
-    let antiClock = [];
-
-    for(let i = arr.length-1; i > -1; i--){
-        antiClock.push(arr[i]);
-    }
-
-    return antiClock;
 }
 
 function getOutPoints(arr){
@@ -418,4 +361,48 @@ function drawShapePoints(geo){
         scene.add(dot2);
     }
    
+}
+
+function create3DFloor(hole, outerWall, pos, nF){
+    var shape = new THREE.Shape(outerWall);
+        shape.holes.push(hole); 
+
+    var floorShape = new THREE.Shape(outerWall);
+    var ceilingShape = new THREE.Shape(outerWall);
+
+    var extrudeSettingsCeiling = { depth: 1, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+    var extrudedGeoCeiling = new THREE.ExtrudeGeometry( ceilingShape, extrudeSettingsCeiling );
+    var meshCeiling = new THREE.Mesh(extrudedGeoCeiling, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+    meshCeiling.castShadow = true;
+    meshCeiling.receiveShadow = true; 
+    meshCeiling.name = "meshCeiling";
+    meshCeiling.position.copy(pos);
+    meshCeiling.position.z = meshCeiling.position.z;
+
+    var extrudeSettingsFloor = { depth: 1, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+    var extrudedGeoFloor = new THREE.ExtrudeGeometry( floorShape, extrudeSettingsFloor );
+    var meshFloor = new THREE.Mesh(extrudedGeoFloor, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+    meshFloor.castShadow = true;
+    meshFloor.receiveShadow = true; 
+    meshFloor.name = "meshFloor";
+    meshFloor.position.copy(pos);
+    meshFloor.position.z = meshFloor.position.z + 13;
+
+    var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+    var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+    var meshWalls = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+    meshWalls.castShadow = true;
+    meshWalls.receiveShadow = true;
+    meshWalls.name = "meshWalls"; 
+    meshWalls.position.copy(pos);
+
+    let mesh3DWrapper = new THREE.Object3D();
+    mesh3DWrapper.add(meshWalls);
+    mesh3DWrapper.add(meshFloor);
+    mesh3DWrapper.add(meshCeiling);
+    mesh3DWrapper.position.y = (floorHeight * nF);
+    
+    mesh3DWrapper.rotation.x = Math.PI/2;
+
+    return mesh3DWrapper;
 }
