@@ -3,13 +3,13 @@ var maxX = 200;
 var maxY = 200;
 var minX = 0;
 var minY = 0;
-var floorHeight = 14;
+var floorHeight = 5;
 
 var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 4;
+var floorNumber = 3;
 
 var wallThickness = 0.5
 
@@ -65,13 +65,15 @@ function buildingGeneration(n){
         removeDuplicates(shapePoints);
         let M = findMiddle(shapePoints);
         let ordered = orderByPolar(shapePoints, M);
+        console.log(ordered);
+        let walls = processOrderedPoints(ordered);
         let outerWall = getOutPoints(ordered);
         let hole = createShapeByOrder(ordered);
 
-        console.log(ordered);
+       
         
 
-        let floor = create3DFloor(hole, outerWall, randCell.bPos, nF);
+        let floor = create3DFloor(hole, outerWall, randCell.bPos, nF, walls);
         scene.add(floor)
       
         // console.log("mesh", floor);
@@ -183,6 +185,99 @@ function getMainPoints(cell){
     }
 
     return obj;
+}
+
+function processOrderedPoints(arr){
+    let walls = [];
+    let removePoints = [];
+    
+    for(let i = 0; i < arr.length; i++){
+        let currentVector = arr[i].p;
+        let aV1;
+        let aV2;
+        
+       
+
+        if(i == 0){
+            aV1 = arr[arr.length - 1].p;
+
+            // var dotGeometry = new THREE.Geometry();
+            // dotGeometry.vertices.push(new THREE.Vector3(aV1.x, aV1.y,0));
+            // var dotMaterial = new THREE.PointsMaterial({
+            // size: 10,
+            // sizeAttenuation: false,
+            // color: new THREE.Color("rgb(255,0,0)")
+            // });
+            // var dot = new THREE.Points(dotGeometry, dotMaterial);
+            // scene.add(dot);
+        }else{
+            aV1 = arr[i - 1].p;  
+        }
+
+        if(i == arr.length -1){
+            aV2 = arr[0].p;
+           
+        }else{
+            aV2 = arr[i + 1].p;  
+        }
+
+        if(i == 1){
+            // var dotGeometry = new THREE.Geometry();
+            // dotGeometry.vertices.push(new THREE.Vector3(aV1.x, aV1.y,0));
+            // var dotMaterial = new THREE.PointsMaterial({
+            // size: 10,
+            // sizeAttenuation: false,
+            // color: new THREE.Color("rgb(255,255,0)")
+            // });
+            // var dot = new THREE.Points(dotGeometry, dotMaterial);
+            // scene.add(dot);
+        }
+        let l1 = new THREE.Vector2(currentVector.x - aV1.x, currentVector.y - aV1.y);
+        let l2 = new THREE.Vector2(aV2.x - currentVector.x, aV2.y - currentVector.y);
+
+        let angle = Math.acos((l1.dot(l2))/(l1.length() * l2.length()));
+        let dg = THREE.Math.radToDeg(angle);
+
+        
+
+        if(dg > 110 && dg < 145 || dg > 0 && dg < 10){
+            removePoints.push(i);
+            // console.log("i", i, " ", dg);
+            // var dotGeometry = new THREE.Geometry();
+            // dotGeometry.vertices.push(new THREE.Vector3(currentVector.x, currentVector.y,0));
+            // var dotMaterial = new THREE.PointsMaterial({
+            // size: 10,
+            // sizeAttenuation: false
+            // });
+            // var dot = new THREE.Points(dotGeometry, dotMaterial);
+            // scene.add(dot);
+        }
+
+        
+    }
+    // console.log(removePoints)
+    // for(let i = 0; i < removePoints.length; i++){
+    //     arr.splice(removePoints[i],1);
+    // }
+
+    for(let i = 0; i < arr.length; i++){
+        let wall = {
+            va: new THREE.Vector2().copy(arr[i].p),
+            vb: 0
+        }
+
+        if(i == arr.length - 1){
+            wall.vb = new THREE.Vector2().copy(arr[0].p);
+        }else{
+            wall.vb = new THREE.Vector2().copy(arr[i + 1].p);
+        }
+
+        walls.push(wall);
+    }
+    
+
+    return walls;
+    // console.log(arr);
 }
 
 function processNeighbours(arr, diagram){
@@ -363,14 +458,21 @@ function drawShapePoints(geo){
    
 }
 
-function create3DFloor(hole, outerWall, pos, nF){
+function create3DFloor(hole, outerWall, pos, nF, walls){
     var shape = new THREE.Shape(outerWall);
         shape.holes.push(hole); 
 
     var floorShape = new THREE.Shape(outerWall);
     var ceilingShape = new THREE.Shape(outerWall);
 
-    var extrudeSettingsCeiling = { depth: 1, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+    // var geometry = new THREE.ShapeGeometry( floorShape );
+    // var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    // var mesh = new THREE.Mesh( geometry, material ) ;
+    // scene.add( mesh );
+
+    let floorCeilingThickness = 0.1;
+
+    var extrudeSettingsCeiling = { depth: floorCeilingThickness, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
     var extrudedGeoCeiling = new THREE.ExtrudeGeometry( ceilingShape, extrudeSettingsCeiling );
     var meshCeiling = new THREE.Mesh(extrudedGeoCeiling, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
     meshCeiling.castShadow = true;
@@ -379,14 +481,14 @@ function create3DFloor(hole, outerWall, pos, nF){
     meshCeiling.position.copy(pos);
     meshCeiling.position.z = meshCeiling.position.z;
 
-    var extrudeSettingsFloor = { depth: 1, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
+    var extrudeSettingsFloor = { depth: floorCeilingThickness, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
     var extrudedGeoFloor = new THREE.ExtrudeGeometry( floorShape, extrudeSettingsFloor );
     var meshFloor = new THREE.Mesh(extrudedGeoFloor, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
     meshFloor.castShadow = true;
     meshFloor.receiveShadow = true; 
     meshFloor.name = "meshFloor";
     meshFloor.position.copy(pos);
-    meshFloor.position.z = meshFloor.position.z + 13;
+    meshFloor.position.z = meshFloor.position.z + (floorHeight);
 
     var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
     var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
