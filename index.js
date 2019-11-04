@@ -9,9 +9,11 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 3;
+var floorNumber = 1;
 
-var wallThickness = 0.5
+var wallThickness = 0.5;
+
+var csg = new CSG();
 
 var scene = new THREE.Scene();
 scene.background = new THREE.Color("rgb(112,112,112)");
@@ -38,6 +40,9 @@ camera.position.z = 200;
 camera.position.y = 50;
 
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
+
+
+
 
 buildingGeneration(floorNumber);
 
@@ -70,11 +75,8 @@ function buildingGeneration(n){
         let outerWall = getOutPoints(ordered);
         let hole = createShapeByOrder(ordered);
 
-       
-        
-
         let floor = create3DFloor(hole, outerWall, randCell.bPos, nF, walls);
-        scene.add(floor)
+        scene.add(floor);
       
         // console.log("mesh", floor);
 
@@ -465,11 +467,10 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     var floorShape = new THREE.Shape(outerWall);
     var ceilingShape = new THREE.Shape(outerWall);
 
-    // var geometry = new THREE.ShapeGeometry( floorShape );
-    // var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-    // var mesh = new THREE.Mesh( geometry, material ) ;
-    // scene.add( mesh );
-
+    var geometry = new THREE.ShapeGeometry( floorShape );
+    var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    var mesh = new THREE.Mesh( geometry, material );
+    scene.add( mesh );
     let floorCeilingThickness = 0.1;
 
     var extrudeSettingsCeiling = { depth: floorCeilingThickness, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
@@ -489,7 +490,7 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     meshFloor.name = "meshFloor";
     meshFloor.position.copy(pos);
     meshFloor.position.z = meshFloor.position.z + (floorHeight);
-
+    
     var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
     var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
     var meshWalls = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
@@ -498,13 +499,86 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     meshWalls.name = "meshWalls"; 
     meshWalls.position.copy(pos);
 
+    var meshWallsWithout = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+    meshWallsWithout.castShadow = true;
+    meshWallsWithout.receiveShadow = true;
+    meshWallsWithout.name = "meshWalls2"; 
+    meshWallsWithout.position.copy(pos);
+
+   
+
     let mesh3DWrapper = new THREE.Object3D();
+    if(nF == 0){
+        createWinWall(mesh3DWrapper, meshWalls, meshCeiling, walls);
+    }
+    
     mesh3DWrapper.add(meshWalls);
+    // mesh3DWrapper.add(meshWallsWithout);
     mesh3DWrapper.add(meshFloor);
     mesh3DWrapper.add(meshCeiling);
     mesh3DWrapper.position.y = (floorHeight * nF);
-    
     mesh3DWrapper.rotation.x = Math.PI/2;
+    
+
+   
 
     return mesh3DWrapper;
+}
+
+function createWinWall(wrapper, mesh, mesh2, walls){
+    var geometry = new THREE.BoxGeometry( 2, 0.7, 3 );
+    // var geometry = new THREE.BoxGeometry( 5, 5, 5 );
+    var material = new THREE.MeshBasicMaterial( { color: new THREE.Color("rgb(112,0,0)") } );
+    var cube = new THREE.Mesh( geometry, material );
+    //cube.rotation.x = -Math.PI/2;
+
+    let wallWithDoor = parseInt(Math.random() * (walls.length-1));
+    
+    let w = walls[wallWithDoor];
+    
+    let normal = new THREE.Vector3( - ( w.vb.y - w.va.y), ( w.vb.x - w.va.x), 0);
+    
+    let r = Math.random();
+    let x = r * w.vb.x + (1 - r) * w.va.x;
+    let y = r * w.vb.y + (1 - r) * w.va.y;
+
+    cube.lookAt( normal);
+
+    let p = new THREE.Vector3(x, y, 0);
+
+    cube.position.copy(p);
+    
+    mesh.add(cube);
+    
+   
+    // var meshA = new THREE.Mesh(new THREE.BoxGeometry(10,10,10), material);
+    // var meshB = new THREE.Mesh(new THREE.SphereGeometry( 5, 32, 32 ));
+    // meshB.position.add(new THREE.Vector3( 10,10,10));
+    // meshA.position.add(new THREE.Vector3( 2, 5, 5));
+    // meshA.updateMatrix();
+    // meshB.updateMatrix();
+    // var meshC = doCSG( meshA, meshB, 'subtract', mesh.material);
+    // scene.add(meshC);
+
+
+    mesh2.updateMatrix();
+    cube.updateMatrix();
+    var meshC = doCSG( mesh2, cube, 'subtract', mesh.material);
+    scene.add(meshC)
+
+    // wrapper.remove(mesh);
+    // // scene.remove(mesh)
+    // wrapper.add(meshC)
+    // mesh = meshC;
+
+}
+
+function doCSG(a,b,op,mat){
+    var bspA = csg.fromMesh( a );
+    var bspB = csg.fromMesh( b );
+    var bspC = bspA[op]( bspB );
+    var result = csg.toMesh( bspC, a.matrix );
+    result.material = mat;
+    result.castShadow  = result.receiveShadow = true;
+    return result;
 }
