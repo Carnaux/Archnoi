@@ -493,27 +493,22 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     
     var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
     var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-    var meshWalls = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
-    meshWalls.castShadow = true;
-    meshWalls.receiveShadow = true;
-    meshWalls.name = "meshWalls"; 
-    meshWalls.position.copy(pos);
+    var meshWallsUnmod = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+    meshWallsUnmod.castShadow = true;
+    meshWallsUnmod.receiveShadow = true;
+    meshWallsUnmod.name = "meshWallsUnmod"; 
+    //meshWallsUnmod.position.copy(pos);
 
-    var meshWallsWithout = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
-    meshWallsWithout.castShadow = true;
-    meshWallsWithout.receiveShadow = true;
-    meshWallsWithout.name = "meshWalls2"; 
-    meshWallsWithout.position.copy(pos);
+
 
    
 
     let mesh3DWrapper = new THREE.Object3D();
     if(nF == 0){
-        createWinWall(mesh3DWrapper, meshWalls, meshCeiling, walls);
+        createWinWall(mesh3DWrapper, meshWallsUnmod, walls, pos);
     }
-    
-    mesh3DWrapper.add(meshWalls);
-    // mesh3DWrapper.add(meshWallsWithout);
+
+    mesh3DWrapper.add(meshFloor);
     mesh3DWrapper.add(meshFloor);
     mesh3DWrapper.add(meshCeiling);
     mesh3DWrapper.position.y = (floorHeight * nF);
@@ -525,12 +520,10 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     return mesh3DWrapper;
 }
 
-function createWinWall(wrapper, mesh, mesh2, walls){
-    var geometry = new THREE.BoxGeometry( 2, 0.7, 3 );
-    // var geometry = new THREE.BoxGeometry( 5, 5, 5 );
+function createWinWall(wrapper, mesh, walls, pos){
+    var geometry = new THREE.BoxGeometry( 2, 0.7, 2 );
     var material = new THREE.MeshBasicMaterial( { color: new THREE.Color("rgb(112,0,0)") } );
     var cube = new THREE.Mesh( geometry, material );
-    //cube.rotation.x = -Math.PI/2;
 
     let wallWithDoor = parseInt(Math.random() * (walls.length-1));
     
@@ -544,29 +537,16 @@ function createWinWall(wrapper, mesh, mesh2, walls){
 
     cube.lookAt( normal);
 
-    let p = new THREE.Vector3(x, y, 0);
+    let p = new THREE.Vector3(x, y, floorHeight -1);
 
     cube.position.copy(p);
-    
-    mesh.add(cube);
-    
-   
-    // var meshA = new THREE.Mesh(new THREE.BoxGeometry(10,10,10), material);
-    // var meshB = new THREE.Mesh(new THREE.SphereGeometry( 5, 32, 32 ));
-    // meshB.position.add(new THREE.Vector3( 10,10,10));
-    // meshA.position.add(new THREE.Vector3( 2, 5, 5));
-    // meshA.updateMatrix();
-    // meshB.updateMatrix();
-    // var meshC = doCSG( meshA, meshB, 'subtract', mesh.material);
-    // scene.add(meshC);
 
-
-    mesh2.updateMatrix();
+    mesh.updateMatrix();
     cube.updateMatrix();
-    var meshC = doCSG( mesh2, cube, 'subtract', mesh.material);
-    scene.add(meshC)
-
-    // wrapper.remove(mesh);
+    var meshC = doCSG( mesh, cube, 'subtract', mesh.material);
+    //scene.add(meshC);
+    meshC.position.copy(pos);
+    wrapper.add(meshC);
     // // scene.remove(mesh)
     // wrapper.add(meshC)
     // mesh = meshC;
