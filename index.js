@@ -9,7 +9,7 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 1;
+var floorNumber = 3;
 
 var wallThickness = 0.5;
 
@@ -117,8 +117,13 @@ function generatePoints(n){
 function getRandomCell(points, diagram){
     let randomIndex = parseInt(Math.random() * points.length + 1);
     
-    let voroId = points[randomIndex].voronoiId;
-
+    let pointsArr = points[randomIndex];
+    let voroId;
+    if(pointsArr == undefined || pointsArr == null){
+        location.reload();
+    }else{
+        voroId = pointsArr.voronoiId;
+    }
     let cell = diagram.cells[voroId];
 
     let mainPoints = getMainPoints(cell);
@@ -467,10 +472,10 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     var floorShape = new THREE.Shape(outerWall);
     var ceilingShape = new THREE.Shape(outerWall);
 
-    var geometry = new THREE.ShapeGeometry( floorShape );
-    var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-    var mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
+    // var geometry = new THREE.ShapeGeometry( floorShape );
+    // var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+    // var mesh = new THREE.Mesh( geometry, material );
+    // scene.add( mesh );
     let floorCeilingThickness = 0.1;
 
     var extrudeSettingsCeiling = { depth: floorCeilingThickness, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
@@ -493,20 +498,20 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     
     var extrudeSettings = { depth: floorHeight, bevelEnabled: false, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 };
     var extrudedGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-    var meshWallsUnmod = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
-    meshWallsUnmod.castShadow = true;
-    meshWallsUnmod.receiveShadow = true;
-    meshWallsUnmod.name = "meshWallsUnmod"; 
-    //meshWallsUnmod.position.copy(pos);
+    var meshWalls = new THREE.Mesh(extrudedGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+    meshWalls.castShadow = true;
+    meshWalls.receiveShadow = true;
+    meshWalls.name = "meshWalls"; 
+    //meshWalls.position.copy(pos);
 
 
 
    
 
     let mesh3DWrapper = new THREE.Object3D();
-    if(nF == 0){
-        createWinWall(mesh3DWrapper, meshWallsUnmod, walls, pos);
-    }
+    
+    createWinWall(mesh3DWrapper, meshWalls, walls, pos, nF);
+    
 
     mesh3DWrapper.add(meshFloor);
     mesh3DWrapper.add(meshFloor);
@@ -520,37 +525,95 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     return mesh3DWrapper;
 }
 
-function createWinWall(wrapper, mesh, walls, pos){
-    var geometry = new THREE.BoxGeometry( 2, 0.7, 2 );
-    var material = new THREE.MeshBasicMaterial( { color: new THREE.Color("rgb(112,0,0)") } );
-    var cube = new THREE.Mesh( geometry, material );
+function createWinWall(wrapper, mesh, walls, pos, nF){
+    let wallMesh = mesh;
+    let wallsWithDoor = [];
+    if(nF == 0){
+        //create doors at least 2
+        for(let i= 0; i < 2; i++){
+            var geometry = new THREE.BoxGeometry( 2, 1.6, 2 );
+            var material = new THREE.MeshBasicMaterial( { color: new THREE.Color("rgb(112,0,0)") } );
+            var cube = new THREE.Mesh( geometry, material );
 
-    let wallWithDoor = parseInt(Math.random() * (walls.length-1));
-    
-    let w = walls[wallWithDoor];
-    
+            let wallWithDoor = parseInt(Math.random() * (walls.length-1));
+            
+            let w = walls[wallWithDoor];
+            wallsWithDoor.push(wallWithDoor);
+            let objPN = findPointAndNormal(w);
+            
+            cube.lookAt( objPN.normal);
+
+            let p = new THREE.Vector3(objPN.x, objPN.y, floorHeight -1);
+
+            cube.position.copy(p);
+
+            wallMesh.updateMatrix();
+            cube.updateMatrix();
+            var meshC = doCSG( wallMesh, cube, 'subtract', mesh.material);
+            wallMesh = meshC;
+        }
+    }
+   
+
+    let winQuantity = parseInt(Math.random() * 3) + 1;
+    console.log("win ",winQuantity)
+
+    for(let i = 0; i < winQuantity; i++){
+        let wallWithWindow = parseInt(Math.random() * (walls.length-1));
+        let found = null;
+        for(let j= 0; j <  wallsWithDoor.length; j++){
+            if(wallsWithDoor[j] == wallWithWindow){
+                found = j;
+            }
+        }
+
+        if(found == null){
+            let w = walls[wallWithWindow];
+            let objPN = findPointAndNormal(w, 0.5);
+
+            var geometry = new THREE.BoxGeometry( floorHeight, objPN.length, 2 );
+            var material = new THREE.MeshBasicMaterial( { color: new THREE.Color("rgb(112,0,0)") } );
+            var cube = new THREE.Mesh( geometry, material );
+
+            cube.lookAt( objPN.normal);
+
+            let p = new THREE.Vector3(objPN.x, objPN.y, 3);
+
+            cube.position.copy(p);
+
+            wallMesh.updateMatrix();
+            cube.updateMatrix();
+            var meshC = doCSG( wallMesh, cube, 'subtract', mesh.material);
+            wallMesh = meshC;
+        }
+
+
+    }
+
+
+
+
+    wallMesh.position.copy(pos);
+    wrapper.add( wallMesh );
+
+}
+
+function findPointAndNormal(w, R){
     let normal = new THREE.Vector3( - ( w.vb.y - w.va.y), ( w.vb.x - w.va.x), 0);
-    
     let r = Math.random();
+    if(R != undefined){
+        r = R;
+    }
+    let l = Math.sqrt(Math.pow(w.vb.x - w.va.x, 2) + Math.pow(w.vb.y - w.va.y, 2)) 
     let x = r * w.vb.x + (1 - r) * w.va.x;
     let y = r * w.vb.y + (1 - r) * w.va.y;
-
-    cube.lookAt( normal);
-
-    let p = new THREE.Vector3(x, y, floorHeight -1);
-
-    cube.position.copy(p);
-
-    mesh.updateMatrix();
-    cube.updateMatrix();
-    var meshC = doCSG( mesh, cube, 'subtract', mesh.material);
-    //scene.add(meshC);
-    meshC.position.copy(pos);
-    wrapper.add(meshC);
-    // // scene.remove(mesh)
-    // wrapper.add(meshC)
-    // mesh = meshC;
-
+    console.log("Va", w.va, " Vb: ", w.vb, " r ", r);
+    return {
+        normal: normal,
+        x: x,
+        y: y,
+        length: l
+    };
 }
 
 function doCSG(a,b,op,mat){
