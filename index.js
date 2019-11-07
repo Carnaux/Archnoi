@@ -9,7 +9,7 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 1;
+var floorNumber = 3;
 
 var wallThickness = 0.5;
 
