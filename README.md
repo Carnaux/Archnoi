@@ -16,7 +16,7 @@ Archnoi is software for generating architecture based on voronoi diagrams.
 | Phase 2       | % done       |
 | ------------- |:-------------:|
 | Offset floor outline     | 100%     |
-| Generating windows and doors     | 0%      |
+| Generating windows and doors     | 95%      |
 
 
 | Phase 3       | % done       |
@@ -24,6 +24,13 @@ Archnoi is software for generating architecture based on voronoi diagrams.
 | Generating rooms     | 0% |
 | Landscape architecture    | 0%     |
 | Generating furniture    | 0% |
+
+
+### To do:
+
+Generating floor polygon: Remove sharp edges.
+
+Generating windows and doors: Make window border follow adjacent/side walls.
 
 
 
