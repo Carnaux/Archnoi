@@ -9,7 +9,7 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 1;
+var floorNumber = 2;
 
 var wallThickness = 0.5;
 
@@ -108,16 +108,11 @@ function buildingGeneration(n){
         let construtableAreaArr = [];
         for(let i = 0; i < floors.length; i++){
 
-            let construtableArea = getAvaliableArea(floors[i], i, buildingWrapper, biggestBox3);
-            if( i != 0 ){
+            let construtableArea = getAvaliableArea(i, buildingWrapper, construtableAreaArr, biggestBox3);
+            construtableAreaArr.push(construtableArea);
 
-            }else{
-                construtableAreaArr.push(construtableArea);
-            }
 
         }    
-
-
 
     }
     
@@ -688,17 +683,15 @@ function getBiggestBox3(floors){
     return objs[objs.length - 1];
 }
 
-function getAvaliableArea(floor, i, building, box){
+function getAvaliableArea( i, building, floorAreas, box){
 
-    
     if(i == 0){
         let tempArr = transformCentroid(floors[box.i].box3.arr,floors[box.i].m, floors[0].m)
         
         let groundShape = new THREE.Shape(tempArr);
-        groundShape.holes.push(floor.shape);
+        groundShape.holes.push(floors[i].shape);
 
-        let area = getPolygonArea(tempArr) - floor.shapeArea;
-
+        let area = getPolygonArea(tempArr) - floors[i].shapeArea;
 
         let groundExtrudeSettings = { depth: 0.01, bevelEnabled: false};
         let groundGeo = new THREE.ExtrudeGeometry( groundShape, groundExtrudeSettings );
@@ -708,8 +701,9 @@ function getAvaliableArea(floor, i, building, box){
         let groundWrapper = new THREE.Object3D();
         groundWrapper.add(meshGround);
         groundWrapper.rotation.x = Math.PI/2;
+        groundWrapper.position.y = - floorHeight - 0.1;
         groundWrapper.name = "ground";
-        building.add(groundWrapper)
+       // building.add(groundWrapper)
 
         let obj = {
             area: area,
@@ -718,6 +712,33 @@ function getAvaliableArea(floor, i, building, box){
         }
 
         return obj;
+    }else{
+        let newMiddle = new THREE.Vector3(Math.abs((floors[i].m.x - floors[i-1].m.x)/2), Math.abs((floors[i].m.x - floors[i-1].m.x)/2));
+        
+        let newPointsCurrent = transformCentroid(floors[i].outPoints, floors[i].m, newMiddle)
+        let currentShape = new THREE.Shape(newPointsCurrent);
+
+        let currentExtrudeSettings = { depth: 0.01, bevelEnabled: false};
+        let currentGeo = new THREE.ExtrudeGeometry( currentShape, currentExtrudeSettings );
+        let meshCurrent = new THREE.Mesh(currentGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+        meshCurrent.updateMatrix();
+        
+        let newPointsPrevious = transformCentroid(floors[i-1].outPoints, floors[i-1].m, newMiddle)
+        let previousShape = new THREE.Shape(newPointsPrevious);
+
+        let previousExtrudeSettings = { depth: 0.01, bevelEnabled: false};
+        let previousGeo = new THREE.ExtrudeGeometry( previousShape, previousExtrudeSettings );
+        let meshPrevious = new THREE.Mesh(previousGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+        meshPrevious.updateMatrix();
+        
+        // scene.add(meshPrevious);
+        // meshPrevious.position.z = 10;
+        var meshC = doCSG( meshPrevious, meshCurrent, 'union', new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,0,176)"), metalness: 0, roughness: 0.8}) );
+        scene.add(meshC)
+       
+        //let areaDifference = floors[i - 1].shapeArea - floors[i].shapeArea;
+
+        //console.log("Area difference", areaDifference);
     }
 }
 
