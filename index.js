@@ -9,7 +9,7 @@ var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
 
 var floors = [];
 
-var floorNumber = 3;
+var floorNumber = 1;
 
 var wallThickness = 0.5;
 
@@ -102,15 +102,23 @@ function buildingGeneration(n){
 
     getBox3Data(floors);
     let biggestBox3 = getBiggestBox3(floors);
-
+    
     
     if(floors.length < 4){
+        let construtableAreaArr = [];
         for(let i = 0; i < floors.length; i++){
 
             let construtableArea = getAvaliableArea(floors[i], i, buildingWrapper, biggestBox3);
-        
+            if( i != 0 ){
+
+            }else{
+                construtableAreaArr.push(construtableArea);
+            }
 
         }    
+
+
+
     }
     
 
@@ -676,28 +684,62 @@ function getBiggestBox3(floors){
 
     objs.sort(function(a, b){return a.a - b.a});
 
-    return objs[0];
+    
+    return objs[objs.length - 1];
 }
 
 function getAvaliableArea(floor, i, building, box){
 
     
     if(i == 0){
+        let tempArr = transformCentroid(floors[box.i].box3.arr,floors[box.i].m, floors[0].m)
         
-
-        let groundShape = new THREE.Shape( floors[box.i].box3.arr);
-        // groundShape.position.copy(floor.cell.bPos)
+        let groundShape = new THREE.Shape(tempArr);
         groundShape.holes.push(floor.shape);
+
+        let area = getPolygonArea(tempArr) - floor.shapeArea;
 
 
         let groundExtrudeSettings = { depth: 0.01, bevelEnabled: false};
         let groundGeo = new THREE.ExtrudeGeometry( groundShape, groundExtrudeSettings );
         let meshGround = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
-        scene.add(meshGround)
-        // let floorExtrudeSettings = { depth: 0.01, bevelEnabled: false};
-        // let floorGeo = new THREE.ExtrudeGeometry( floorShape, floorExtrudeSettings );
-        // let meshAvailGround = new THREE.Mesh(floorGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
+        meshGround.position.copy(floors[0].cell.bPos);
+        
+        let groundWrapper = new THREE.Object3D();
+        groundWrapper.add(meshGround);
+        groundWrapper.rotation.x = Math.PI/2;
+        groundWrapper.name = "ground";
+        building.add(groundWrapper)
 
+        let obj = {
+            area: area,
+            shape: groundShape,
+            wrapper: groundWrapper
+        }
 
+        return obj;
     }
+}
+
+function transformCentroid(arr, p, m){
+    let newPoints = [];
+
+    for(let i = 0; i < arr.length; i++){
+
+        let v = new THREE.Vector2(arr[i].x - p.x + m.x, arr[i].y -p.y + m.y)
+        newPoints.push(v);
+    }
+
+    return newPoints;
+}
+
+function rotatePoints(arr, theta){
+    let newPoints = [];
+    for(let i = 0; i < arr.length; i++){
+
+        let v = new THREE.Vector2(((arr[i].x * Math.cos(theta)) - (arr[i].y * Math.sin(theta))), ((arr[i].y * Math.cos(theta)) + (arr[i].x * Math.sin(theta))))
+        newPoints.push(v);
+    }
+
+    return newPoints;
 }
