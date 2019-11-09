@@ -19,6 +19,8 @@ var groundOffset = 30;
 
 var csg = new CSG();
 
+var buildingWrapper = new THREE.Object3D();
+
 var scene = new THREE.Scene();
 scene.background = new THREE.Color("rgb(112,112,112)");
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
@@ -57,7 +59,7 @@ var animate = function () {
 animate();
 
 function buildingGeneration(n){
-    let buildingWrapper = new THREE.Object3D();
+    
     for(let nF = 0; nF < n; nF++){
     
         let pointArr = generatePoints(50);
@@ -100,21 +102,21 @@ function buildingGeneration(n){
         buildingWrapper.add(floor);
     }
 
-    getBox3Data(floors);
-    let biggestBox3 = getBiggestBox3(floors);
+    // getBox3Data(floors);
+    // let biggestBox3 = getBiggestBox3(floors);
     
     
-    if(floors.length < 4){
-        let construtableAreaArr = [];
-        for(let i = 0; i < floors.length; i++){
+    // if(floors.length < 4){
+    //     let construtableAreaArr = [];
+    //     for(let i = 0; i < floors.length; i++){
 
-            let construtableArea = getAvaliableArea(i, buildingWrapper, construtableAreaArr, biggestBox3);
-            construtableAreaArr.push(construtableArea);
+    //         let construtableArea = getAvaliableArea(i, buildingWrapper, construtableAreaArr, biggestBox3);
+    //         construtableAreaArr.push(construtableArea);
 
 
-        }    
+    //     }    
 
-    }
+    // }
     
 
 
@@ -715,7 +717,7 @@ function getAvaliableArea( i, building, floorAreas, box){
     }else{
         let newMiddle = new THREE.Vector3(Math.abs((floors[i].m.x - floors[i-1].m.x)/2), Math.abs((floors[i].m.x - floors[i-1].m.x)/2));
         
-        let newPointsCurrent = transformCentroid(floors[i].outPoints, floors[i].m, newMiddle)
+        let newPointsCurrent = transformCentroid(floors[i].outPoints, floors[i].m,  floors[i].cell.bPos);
         let currentShape = new THREE.Shape(newPointsCurrent);
 
         let currentExtrudeSettings = { depth: 0.01, bevelEnabled: false};
@@ -723,7 +725,7 @@ function getAvaliableArea( i, building, floorAreas, box){
         let meshCurrent = new THREE.Mesh(currentGeo, new THREE.MeshStandardMaterial({color: new THREE.Color("rgb(205,192,176)"), metalness: 0, roughness: 0.8}) );
         meshCurrent.updateMatrix();
         
-        let newPointsPrevious = transformCentroid(floors[i-1].outPoints, floors[i-1].m, newMiddle)
+        let newPointsPrevious = transformCentroid(floors[i-1].outPoints, floors[i-1].m, floors[i-1].cell.bPos);
         let previousShape = new THREE.Shape(newPointsPrevious);
 
         let previousExtrudeSettings = { depth: 0.01, bevelEnabled: false};
@@ -763,4 +765,21 @@ function rotatePoints(arr, theta){
     }
 
     return newPoints;
+}
+
+function exportDae(){
+    var exporter = new THREE.ColladaExporter();
+
+    var data = exporter.parse(buildingWrapper);
+
+    toFile("exportedBuilding.dae", data.data)
+}
+function toFile(filename, text){
+    let mime = "application/octet-stream";
+    var a = document.createElement('a');
+    a.download = filename;
+    a.href = URL.createObjectURL(new Blob([text], {type: mime}));
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
 }
