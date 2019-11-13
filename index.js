@@ -3,6 +3,7 @@ var maxX = 200;
 var maxY = 200;
 var minX = 0;
 var minY = 0;
+
 var floorHeight = 5;
 
 var bbox = {xl: minX, xr: maxX, yt: minY, yb: maxY};
@@ -19,10 +20,10 @@ var groundOffset = 30;
 
 var csg = new CSG();
 
-var buildingWrapper = new THREE.Object3D();
+var globalBuildingReference;
 
 var scene = new THREE.Scene();
-scene.background = new THREE.Color("rgb(112,112,112)");
+scene.background = new THREE.Color("rgb(255,255,255)");
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
 var renderer = new THREE.WebGLRenderer();
@@ -47,7 +48,11 @@ camera.position.y = 50;
 
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-buildingGeneration(floorNumber);
+var buildingObj3D = buildingGeneration(floorNumber);
+globalBuildingReference = buildingObj3D;
+scene.add(buildingObj3D);
+
+createFloorsListing();
 
 var animate = function () {
     requestAnimationFrame( animate );
@@ -58,14 +63,17 @@ var animate = function () {
 
 animate();
 
+
 function buildingGeneration(n){
-    
+    var buildingWrapper = new THREE.Object3D();
+    buildingWrapper.name = "buildingWrapper";
     for(let nF = 0; nF < n; nF++){
     
         let pointArr = generatePoints(50);
 
         let diagram = voronoi.compute(pointArr, bbox);
-        
+        let voronoiLines = drawLines(diagram);
+        console.log(diagram)        
         let randCell = getRandomCell(pointArr, diagram);
         let shapePoints = processNeighbours(randCell.neighbours, diagram);
         removeMainPoints(shapePoints, randCell);
@@ -80,9 +88,11 @@ function buildingGeneration(n){
         
         let floorArea = getPolygonArea(outerWall);
 
+        scene.add(voronoiLines)
         let obj = {
             pointArr: pointArr,
             diagram: diagram,
+            diagramDrawing: voronoiLines,
             cell: randCell,
             shapePoints: shapePoints,
             m: M,
@@ -119,8 +129,8 @@ function buildingGeneration(n){
     // }
     
 
-
-    scene.add(buildingWrapper);
+    return buildingWrapper;
+    //scene.add(buildingWrapper);
 }
 
 function generatePoints(n){
@@ -431,7 +441,8 @@ function createShapeByOrder(arr){
     return path;
 }
 
-function drawLines(){
+function drawLines(diagram){
+    let line;
     for(let i = 0; i < diagram.edges.length; i++){
         var material = new THREE.LineBasicMaterial({
             color: 0x0000ff
@@ -443,9 +454,10 @@ function drawLines(){
             new THREE.Vector3( diagram.edges[i].vb.x,  diagram.edges[i].vb.y, 0 )
         );
         
-        var line = new THREE.Line( geometry, material );
-        scene.add( line );
+        line = new THREE.Line( geometry, material );
+        
     }
+    return line;
 }
 
 function getOutPoints(arr){
@@ -768,12 +780,14 @@ function rotatePoints(arr, theta){
 }
 
 function exportDae(){
+
     var exporter = new THREE.ColladaExporter();
 
-    var data = exporter.parse(buildingWrapper);
+    var data = exporter.parse(globalBuildingReference);
 
-    toFile("exportedBuilding.dae", data.data)
+    toFile("archnoiBuilding.dae", data.data)
 }
+
 function toFile(filename, text){
     let mime = "application/octet-stream";
     var a = document.createElement('a');
@@ -783,3 +797,24 @@ function toFile(filename, text){
     document.body.appendChild(a);
     a.click();
 }
+
+function dataFromUI(obj){
+   floorNumber = obj.floorNumber;
+   floorHeight = obj.floorHeight;
+   wallThickness = obj.wallThickness;
+   maxWindows = obj.maxWindows;
+}
+
+function cmdFromUI(cmd){
+    if(cmd == 1){
+        let selectedObject = scene.getObjectByName("buildingWrapper");
+        scene.remove(selectedObject)
+        let newBuilding = buildingGeneration(floorNumber);
+        globalBuildingReference = newBuilding;
+        scene.add(newBuilding);
+    }
+}
+
+function createFloorsListing(){
+
+}   

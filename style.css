@@ -1,0 +1,182 @@
+:root {
+    --main-bg-color: white;
+    --inverse: black;
+  }
+body{
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Rubik', sans-serif;
+
+    
+}
+
+/* DESKTOP CONTENT */
+
+/* leftMenu */
+#leftMenuTitle{
+    font-family: 'Rubik', sans-serif;
+    font-weight: bold;
+    display: none;
+    font-size: 25px;
+    margin-left: 10px;
+}
+.opt{
+    margin-left: 20px;
+    display: none;
+}
+#leftMenuData{
+    position: absolute;
+    bottom: 50px;
+    margin-left: 60px;
+    display: none;
+}
+#leftMenuGenerate{
+    position: absolute;
+    bottom: 15px;
+    margin-left: 60px;
+    display: none;
+}
+#leftMenu{
+    position: absolute;
+    left: 0;
+    top: 50px;
+
+    width: 50px;
+    height: 50px;
+
+    border-style: solid;
+    border-left-style: none;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-color: var( --inverse);
+
+    background-color: var( --main-bg-color);
+}
+
+#leftMenu:hover{
+    width: 200px;
+    height: 500px;
+}
+#leftMenu:hover #leftMenuTitle{
+    display: block;   
+}
+#leftMenu:hover .opt{
+    display: block;
+    
+}
+#leftMenu:hover #leftMenuData{
+    display: block;
+    
+}
+#leftMenu:hover #leftMenuGenerate{
+    display: block;
+   
+}
+
+
+
+/* rightMenu */
+#floorsListing{
+    display: none;
+}
+#rightMenuTitle{
+    font-family: 'Rubik', sans-serif;
+    font-weight: bold;
+    display: none;
+    font-size: 25px;
+    margin-left: 10px;
+}
+#rightMenu{
+    position: absolute;
+    right: 0;
+    top: 50px;
+
+    width: 50px;
+    height: 50px;
+
+    border-style: solid;
+    border-right-style: none;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-color: var( --inverse);
+
+    background-color: var( --main-bg-color);
+}
+#rightMenuExportAll{
+    position: absolute;
+    bottom: 15px;
+    right: 60px;
+    display: none;
+}
+#rightMenuExportSelected{
+    position: absolute;
+    bottom: 15px;
+    left: 20px;
+    display: none;
+}
+#rightMenu:hover{
+    width: 300px;
+    height: 600px;
+}
+#rightMenu:hover #rightMenuTitle{
+    display: block;   
+}
+#rightMenu:hover #rightMenuExportAll{
+    display: block;   
+}
+#rightMenu:hover #rightMenuExportSelected{
+    display: block;   
+}
+#rightMenu:hover #floorsListing{
+    display: block;   
+}
+
+.customBt{
+    border-style: solid;
+    border-color: var( --inverse);
+    background-color: var( --main-bg-color);
+    border-radius: 10px;
+    font-family: 'Rubik', sans-serif;
+    font-size: 15px;
+}
+.floorOptBt{
+    font-size: 10px;
+}
+.floorWrapper{
+    width: 250px;
+    height: 100px;
+    margin-left: 25px;
+    background-color: rgb(230, 230, 230);
+
+    border-style: solid;
+    border-color:rgb(230, 230, 230);
+    border-radius: 10px;
+}
+.floorTitle{
+    position: relative;
+    top: -10px;
+    font-size: 20px;
+}
+.iconFloorTitle{
+    float: right;
+}
+
+/* MOBILE CONTENT */
+
+@media only screen and (max-width: 600px) {
+    #desktopContent{
+        display: none;
+    } 
+    #mobileContent{
+        display: block;
+    } 
+}
+@media only screen and (min-width: 992px) {
+    #desktopContent{
+        display: block;
+    } 
+    #mobileContent{
+        display: none;
+    }
+}

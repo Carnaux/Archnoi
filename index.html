@@ -5,21 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Archnoi</title>
-    
+    <link href="https://fonts.googleapis.com/css?family=Rubik|ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://kit.fontawesome.com/3eaf1ce851.js" crossorigin="anonymous"></script>
 </head>
-<body style="margin: 0; padding: 0;">
+<body>
+    <div id="desktopContent">
+        <div id="leftMenu">
+            <p id="leftMenuTitle">Configurations</p>
+            <div id="opt1" class="opt">
+                <p id="opt1Title">Number of Floors</p>
+                <input id="opt1Input" type="number" min="1" value="2" onchange="warningsToEl('opt1Input', this.value)">
+            </div>
+            <div id="opt2" class="opt">
+                <p id="opt2Title">Floor Height</p>
+                <input id="opt2Input" type="number" min="1" value="5">
+            </div>
+            <div id="opt3" class="opt">
+                <p id="opt3Title">Wall Thickness</p>
+                <input id="opt3Input" type="number" min="0.1" value="0.5" onchange="warningsToEl('opt3Input', this.value)">
+            </div>
+            <div id="opt4" class="opt">
+                <p id="opt4Title">Max of Windows</p>
+                <input id="opt4Input" type="number" min="0" value="3" onchange="warningsToEl('opt4Input', this.value)">
+            </div>
+            <button id="leftMenuData" class="customBt" onclick="setData()">Set Data</button>
+            <button id="leftMenuGenerate" class="customBt" onclick="cmdFromUI(1)">Generate</button>
+        </div>
+
+        <div id="rightMenu">
+            <p id="rightMenuTitle">Floors</p>
+            <div id="floorsListing">
+
+                <div id="floor" class="floorWrapper" >
+                    <p class="floorTitle">Floor 1 <i id="floorShowIcon"class="iconFloorTitle fas fa-arrow-alt-circle-down" onclick="showContent(this)"></i></p>
+                    <div id="contentHide">
+                            <button class="floorOptBt customBt">Voronoid Diagram <i class="fas fa-eye-slash"></i></button>
+                            <button class="floorOptBt customBt">Explode floor <i class="fas fa-eye-slash"></i></button>
+                    </div>
+                    <p id="floorExportSelect" >Select to export floor: <input type="radio" value="1"> </p>
+                </div>
+
+            </div>
+            <button id="rightMenuExportSelected" class="customBt" onclick="exportDae()">Export Selected</button>
+            <button id="rightMenuExportAll" class="customBt" onclick="exportDae()">Export All</button>
+        </div>
+    </div>
+
+    <div id="mobileContent">
+        
+    </div>
     
-    <button style="position: absolute;" onclick="exportDae()">Export</button>
 
     
-    <script src="three.js"></script>
-    <script src="colladaExporter.js"></script>
-    <script src="orbitControls.js"></script>
-    <script src="rhill-voronoi-core.js"></script>
-    <script src="offsetContour.js"></script>
-    <script src="CSGMesh.js"></script>
+    <script src="src/js/three.js"></script>
+    <script src="src/js/colladaExporter.js"></script>
+    <script src="src/js/orbitControls.js"></script>
+    <script src="src/js/rhill-voronoi-core.js"></script>
+    <script src="src/js/offsetContour.js"></script>
+    <script src="src/js/CSGMesh.js"></script>
     <script src="index.js"></script>
-
-    
+    <script src="src/js/uiController.js"></script>
 </body>
 </html>
