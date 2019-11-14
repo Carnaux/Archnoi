@@ -17,9 +17,33 @@ function setData(){
         wallThickness: parseFloat(document.getElementById("opt3Input").value),
         maxWindows: parseInt(document.getElementById("opt4Input").value),
     }
-
     dataFromUI(data);
 }
+
+function sendCommands(type, el){
+    let id;
+    if(el != null && el != undefined){
+        let p = el.parentElement;
+        let str = p.id;
+        id = parseInt(str.slice(5, str.length));
+        
+        let childIcon = el.querySelector(".fas");
+        if(childIcon.classList == "fas fa-eye-slash"){
+            childIcon.classList = "fas fa-eye";
+        }else{
+            childIcon.classList = "fas fa-eye-slash";
+        }
+    }
+
+    if(type == "diagram"){
+        cmdFromUI(2, id);
+    }else  if(type == "explode"){
+         cmdFromUI(3,id);
+
+       
+    }
+}
+
 
 // function showContent(i){
 //     let el = i.parentElement.parentElement;

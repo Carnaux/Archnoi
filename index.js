@@ -22,6 +22,7 @@ var csg = new CSG();
 
 var globalBuildingReference;
 
+
 var scene = new THREE.Scene();
 scene.background = new THREE.Color("rgb(255,255,255)");
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
@@ -57,6 +58,9 @@ createFloorsListing();
 var animate = function () {
     requestAnimationFrame( animate );
     controls.update();
+
+
+
 
     renderer.render( scene, camera );
 };
@@ -107,7 +111,8 @@ function buildingGeneration(n){
             },
             shape: new THREE.Shape(outerWall),
             shapeArea: floorArea,
-            mesh3D: floor
+            mesh3D: floor,
+            exploded: false
         };
 
         floors.push(obj);
@@ -561,7 +566,6 @@ function create3DFloor(hole, outerWall, pos, nF, walls){
     createWinWall(mesh3DWrapper, meshWalls, walls, pos, nF);
     
     mesh3DWrapper.add(meshFloor);
-    mesh3DWrapper.add(meshFloor);
     mesh3DWrapper.add(meshCeiling);
     mesh3DWrapper.position.y = (floorHeight * nF);
     mesh3DWrapper.rotation.x = Math.PI/2;
@@ -637,6 +641,7 @@ function createWinWall(wrapper, mesh, walls, pos, nF){
 
 
     wallMesh.position.copy(pos);
+    wallMesh.name = "meshWalls"
     wrapper.add( wallMesh );
 
 }
@@ -825,7 +830,7 @@ function dataFromUI(obj){
    maxWindows = obj.maxWindows;
 }
 
-function cmdFromUI(cmd){
+function cmdFromUI(cmd, id){
     if(cmd == 1){
         floors = [];
         let selectedObject = scene.getObjectByName("buildingWrapper");
@@ -835,6 +840,28 @@ function cmdFromUI(cmd){
         scene.add(newBuilding);
 
         createFloorsListing();
+    }else if(cmd == 2){
+        let voronoi = floors[id].diagramDrawing;
+        voronoi.visible = !voronoi.visible;
+    }else if(cmd == 3){
+        let floorMesh = floors[id].mesh3D;
+
+        let ceiling = floorMesh.getObjectByName("meshCeiling");
+        let walls = floorMesh.getObjectByName("meshWalls");
+        
+        if(floors[id].exploded){
+            floors[id].exploded = false;
+            ceiling.position.z += 15;
+            walls.position.z += 10;
+            callAnimateExplode(walls, ceiling, id, floors[id].exploded)
+        }else{
+            floors[id].exploded = true;
+            ceiling.position.z -= 15;
+            walls.position.z -= 10;
+        }
+        
+
+       
     }
 }
 
@@ -856,3 +883,9 @@ function createFloorsListing(){
 
     }
 }   
+
+function callAnimateExplode(w, c, id, d){
+    
+}
+
+
