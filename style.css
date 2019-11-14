@@ -79,6 +79,8 @@ body{
 /* rightMenu */
 #floorsListing{
     display: none;
+    overflow-y: scroll;
+    height: 400px;
 }
 #rightMenuTitle{
     font-family: 'Rubik', sans-serif;
@@ -102,6 +104,7 @@ body{
     border-color: var( --inverse);
 
     background-color: var( --main-bg-color);
+    overflow: hidden;
 }
 #rightMenuExportAll{
     position: absolute;
@@ -145,23 +148,42 @@ body{
 }
 .floorWrapper{
     width: 250px;
-    height: 100px;
+    height: 120px;
+    margin-top: 25px;
     margin-left: 25px;
     background-color: rgb(230, 230, 230);
 
     border-style: solid;
-    border-color:rgb(230, 230, 230);
+    border-color:rgb(200, 200, 200);
     border-radius: 10px;
+
+    display: none;
+}
+.floorShowIcon{
+    position: relative;
+    display: block;
+    top: 10px;
+    right: 0;
+    float: right;
+    font-size: 20px;
+}
+.floorTitleId{
+    position: relative;
+    display: inline-block;
+    top: 0px;
+    right: 0;
+    font-size: 20px;
 }
 .floorTitle{
     position: relative;
+
     top: -10px;
     font-size: 20px;
+    
 }
-.iconFloorTitle{
-    float: right;
+.hideContent{
+    display: none;
 }
-
 /* MOBILE CONTENT */
 
 @media only screen and (max-width: 600px) {

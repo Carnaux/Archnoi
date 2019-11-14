@@ -21,22 +21,22 @@ function setData(){
     dataFromUI(data);
 }
 
-function showContent(i){
-    let el = i.parentElement.parentElement;
-    // let el = p.parentElement;
-    let childShowIcon = el.querySelector("#floorShowIcon");
-    if(childShowIcon.classList == "iconFloorTitle fas fa-arrow-alt-circle-down"){
-        childShowIcon.classList = "iconFloorTitle fas fa-arrow-alt-circle-up";
-    }else{
-        childShowIcon.classList = "iconFloorTitle fas fa-arrow-alt-circle-down";
-    }
+// function showContent(i){
+//     let el = i.parentElement.parentElement;
+   
+//     let childShowIcon = el.querySelector(".floorShowIcon");
+//     if(childShowIcon.classList == "floorShowIcon fas fa-arrow-alt-circle-down"){
+//         childShowIcon.classList = "floorShowIcon fas fa-arrow-alt-circle-up";
+//     }else{
+//         childShowIcon.classList = "floorShowIcon fas fa-arrow-alt-circle-down";
+//     }
 
-    let childContent = el.querySelector("#contentHide");
-    let childContentState = childContent.style.display;
-    if(childContentState == "block"){
-        childContent.style.display = "none";
-    }else{
-        childContent.style.display = "block";
-    }
+//     let childContent = el.querySelector("#contentHide");
+//     let childContentState = childContent.style.display;
+//     if(childContentState == "block"){
+//         childContent.style.display = "none";
+//     }else{
+//         childContent.style.display = "block";
+//     }
     
-}
+// }

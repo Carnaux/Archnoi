@@ -72,8 +72,7 @@ function buildingGeneration(n){
         let pointArr = generatePoints(50);
 
         let diagram = voronoi.compute(pointArr, bbox);
-        let voronoiLines = drawLines(diagram);
-        console.log(diagram)        
+         
         let randCell = getRandomCell(pointArr, diagram);
         let shapePoints = processNeighbours(randCell.neighbours, diagram);
         removeMainPoints(shapePoints, randCell);
@@ -88,7 +87,10 @@ function buildingGeneration(n){
         
         let floorArea = getPolygonArea(outerWall);
 
-        scene.add(voronoiLines)
+        let voronoiLines = drawLines(diagram,randCell.bPos, nF);
+        voronoiLines.visible = false;
+        scene.add(voronoiLines);   
+
         let obj = {
             pointArr: pointArr,
             diagram: diagram,
@@ -441,23 +443,41 @@ function createShapeByOrder(arr){
     return path;
 }
 
-function drawLines(diagram){
-    let line;
-    for(let i = 0; i < diagram.edges.length; i++){
-        var material = new THREE.LineBasicMaterial({
-            color: 0x0000ff
-        });
-        
-        var geometry = new THREE.Geometry();
-        geometry.vertices.push(
-            new THREE.Vector3( diagram.edges[i].va.x,  diagram.edges[i].va.y, 0 ),
-            new THREE.Vector3( diagram.edges[i].vb.x,  diagram.edges[i].vb.y, 0 )
-        );
-        
-        line = new THREE.Line( geometry, material );
-        
+function drawLines(diagram, m, h){
+    
+    let linesWrapper = new THREE.Object3D();
+    linesWrapper.position.copy(m);
+   
+    for(let i = 0; i < diagram.cells.length; i++){
+
+        let cell = diagram.cells[i];
+
+        for(let k = 0; k < cell.halfedges.length; k++){
+
+            let va = new THREE.Vector3( cell.halfedges[k].edge.va.x,  cell.halfedges[k].edge.va.y, 0 );
+            let vb = new THREE.Vector3(  cell.halfedges[k].edge.vb.x,  cell.halfedges[k].edge.vb.y, 0 );
+
+            var material = new THREE.LineBasicMaterial({
+                color: 0x0000ff
+            });
+            
+            var geometry = new THREE.Geometry();
+            geometry.vertices.push(
+                va,
+                vb
+            );
+            
+            var line = new THREE.Line( geometry, material );
+            linesWrapper.add( line );
+            
+            
+        }
     }
-    return line;
+    let rotationWrapper = new THREE.Object3D();
+    rotationWrapper.position.y = (floorHeight * h) - floorHeight;
+    rotationWrapper.rotation.x = Math.PI/2;
+    rotationWrapper.add(linesWrapper);
+    return rotationWrapper
 }
 
 function getOutPoints(arr){
@@ -807,14 +827,32 @@ function dataFromUI(obj){
 
 function cmdFromUI(cmd){
     if(cmd == 1){
+        floors = [];
         let selectedObject = scene.getObjectByName("buildingWrapper");
         scene.remove(selectedObject)
         let newBuilding = buildingGeneration(floorNumber);
         globalBuildingReference = newBuilding;
         scene.add(newBuilding);
+
+        createFloorsListing();
     }
 }
 
 function createFloorsListing(){
+    let parent = document.getElementById("floorsListing");
+    let el = document.getElementById("floor");
 
+    parent.querySelectorAll('*').forEach(n => n.remove());
+    for(let i = 0; i < floors.length; i++){
+        let newEl = el.cloneNode(true);
+        
+        newEl.id = "floor"+i;
+        newEl.style.display = "block";
+
+        let p = newEl.querySelector(".floorTitleId");
+        p.textContent = "Floor "+(i+1);
+        
+        parent.appendChild(newEl);
+
+    }
 }   

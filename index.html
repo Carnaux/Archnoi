@@ -36,21 +36,26 @@
         <div id="rightMenu">
             <p id="rightMenuTitle">Floors</p>
             <div id="floorsListing">
-
-                <div id="floor" class="floorWrapper" >
-                    <p class="floorTitle">Floor 1 <i id="floorShowIcon"class="iconFloorTitle fas fa-arrow-alt-circle-down" onclick="showContent(this)"></i></p>
-                    <div id="contentHide">
-                            <button class="floorOptBt customBt">Voronoid Diagram <i class="fas fa-eye-slash"></i></button>
-                            <button class="floorOptBt customBt">Explode floor <i class="fas fa-eye-slash"></i></button>
-                    </div>
-                    <p id="floorExportSelect" >Select to export floor: <input type="radio" value="1"> </p>
-                </div>
-
+               
             </div>
             <button id="rightMenuExportSelected" class="customBt" onclick="exportDae()">Export Selected</button>
             <button id="rightMenuExportAll" class="customBt" onclick="exportDae()">Export All</button>
         </div>
     </div>
+
+
+    <div id="floor" class="floorWrapper" >
+        <div class="floorTitle"><p class="floorTitleId">Floor 1</p></div> 
+        <!-- <div class="floorTitle"><p class="floorTitleId">Floor 1</p> <i class="floorShowIcon fas fa-arrow-alt-circle-down" onclick="showContent(this)"></i></div>  -->
+        <button id="showDiagramBt" class="floorOptBt customBt">Voronoid Diagram <i class="fas fa-eye-slash"></i></button>
+        <button id="explodeBt" class="floorOptBt customBt">Explode floor <i class="fas fa-eye-slash"></i></button>
+        <!-- <div id="contentHide" class="hideContent">
+            <button id="showDiagramBt" class="floorOptBt customBt">Voronoid Diagram <i class="fas fa-eye-slash"></i></button>
+            <button id="explodeBt" class="floorOptBt customBt">Explode floor <i class="fas fa-eye-slash"></i></button>
+        </div> -->
+        <p id="floorExportSelect" >Select to export floor: <input type="radio" value="1"> </p>
+    </div>
+
 
     <div id="mobileContent">
         
