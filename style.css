@@ -49,9 +49,15 @@ body{
 }
 #beginBt{
     position: relative;
-    bottom: -200px;
+    left: 80px;
+    bottom: -100px;
     /* width: 180px; */
     /* height: auto; */
+}
+#beginBt2{
+    position: relative;
+    bottom: -200px;
+    left: -40px;
 }
 @media only screen and (max-width: 600px) {
     #imgBg{
@@ -78,6 +84,12 @@ body{
         position: absolute;
         bottom: 200px;
         left: 40%;
+        height: auto;
+    }
+    #beginBt2{
+        position: absolute;
+        bottom: 100px;
+        left: 30%;
         height: auto;
     }
 }
